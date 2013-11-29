@@ -1,0 +1,11 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// A PASSTHROUGH SHADER
+
+varying vec4 vertColor;
+
+void main(){
+	vertColor = gl_Vertex;
+	// 	Just pass the untransformed vertex
+	gl_Position = gl_Vertex;
+}
+
