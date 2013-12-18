@@ -194,9 +194,9 @@ void display(){
 		// TODO ENABLE PER VERTEX LIGHTING
 		break;
 	case BLINN_PHONG:
-		mesh->setRenderMode(Mesh::RenderMode::BLINN_PHONG_RENDERER);
 		// ENABLE PER FRAGMENT LIGHTING
 		blinnPhongShader.bindShader();
+		mesh->setRenderMode(Mesh::RenderMode::GOURAUD_RENDERER);
 		break;
 		break;
 	default:
@@ -205,6 +205,7 @@ void display(){
 	glPushMatrix();
 	// Rotate the object
 	glMultMatrixf(&objectMatrix[0][0]);
+	//glScalef(0.75f, 0.75f, 0.75f);
 	// Render the object 
 	// TODO
 	mesh->render();
@@ -274,9 +275,9 @@ main(int argc, char** argv) {
 	//mesh->loadOff("meshes/cow.off");
 	//mesh->loadOff("meshes/dragon.off");
 	//mesh->loadOff("meshes/drei.off");
-	//mesh->loadOff("meshes/eight.off");
+	mesh->loadOff("meshes/eight.off");
 	//mesh->loadOff("meshes/europemap.off");
-	mesh->loadOff("meshes/heptoroid.off");
+	//mesh->loadOff("meshes/heptoroid.off");
 	//mesh->loadOff("meshes/mannequin.off");
 	//mesh->loadOff("meshes/sphere.off");
 	//mesh->loadOff("meshes/teapot.off");
