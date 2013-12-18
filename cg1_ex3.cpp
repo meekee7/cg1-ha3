@@ -24,7 +24,7 @@
 #else
 #include <GL/glew.h>
 #include <GL/glut.h>
-#include <GL/GL.h>
+#include <GL\GL.h>
 #endif
 
 #include "glm/glm.hpp"
@@ -47,6 +47,7 @@
 #include <cassert>
 #include <cmath>
 
+#include "Mesh.h"
 
 ///////////////////////
 // DECLARATIONS
@@ -89,16 +90,17 @@ vec4 lightColor(0.7f, 0.7f, 0.7f, 1.0f);
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // variables, global
 GLSLShader blinnPhongShader;
+Mesh* mesh;
 
 
-enum RenderMode{
+enum MainRenderMode{
 	FLAT,
 	GOURAUD,
 	BLINN_PHONG,
 	MAX_MODES
 };
 
-RenderMode currentRenderer = FLAT;
+MainRenderMode currentRenderer = FLAT;
 
 // opengl initializations
 void initOpenGLContext(int argc, char **argv);
@@ -111,7 +113,6 @@ void mouseMoved(int x, int y);
 
 // window reshape callback
 void reshape(int width, int height);
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //! Init OpenGL
@@ -185,12 +186,15 @@ void display(){
 	// Set the render states for the current rendering technique
 	switch (currentRenderer){
 	case FLAT:
+		mesh->setRenderMode(Mesh::RenderMode::FLAT_RENDERER);
 		// TODO ENABLE PER FACE LIGHTING
 		break;
 	case GOURAUD:
+		mesh->setRenderMode(Mesh::RenderMode::GOURAUD_RENDERER);
 		// TODO ENABLE PER VERTEX LIGHTING
 		break;
 	case BLINN_PHONG:
+		mesh->setRenderMode(Mesh::RenderMode::BLINN_PHONG_RENDERER);
 		// ENABLE PER FRAGMENT LIGHTING
 		blinnPhongShader.bindShader();
 		break;
@@ -198,18 +202,19 @@ void display(){
 	default:
 		break;
 	}
-
 	glPushMatrix();
 	// Rotate the object
 	glMultMatrixf(&objectMatrix[0][0]);
-
 	// Render the object 
 	// TODO
-	glBegin(GL_TRIANGLES);
+	mesh->render();
+	//glutSolidTeapot(1.0);
+
+	/*glBegin(GL_TRIANGLES);
 	glVertex3f(1, 0, 0);
 	glVertex3f(0, 1, 0);
 	glVertex3f(0, 0, 1);
-	glEnd();
+	glEnd();*/
 
 
 
@@ -233,7 +238,7 @@ keyboard(unsigned char key, int /*x*/, int /*y*/) {
 
 	switch (key) {
 	case TAB_KEY:
-		currentRenderer = (RenderMode)(((int)currentRenderer + 1) % MAX_MODES);
+		currentRenderer = (MainRenderMode)(((int)currentRenderer + 1) % MAX_MODES);
 		break;
 
 	case 's':
@@ -255,7 +260,6 @@ keyboard(unsigned char key, int /*x*/, int /*y*/) {
 	glutPostRedisplay();
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //! Program main
 //! @param argc number of command line arguments
@@ -263,7 +267,21 @@ keyboard(unsigned char key, int /*x*/, int /*y*/) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 int
 main(int argc, char** argv) {
-
+	mesh = new Mesh();
+	//mesh->loadOff("meshes/bunny.off");
+	//mesh->loadOff("meshes/bunnysimple.off");
+	//mesh->loadOff("meshes/camel_head.off");
+	//mesh->loadOff("meshes/cow.off");
+	//mesh->loadOff("meshes/dragon.off");
+	//mesh->loadOff("meshes/drei.off");
+	//mesh->loadOff("meshes/eight.off");
+	//mesh->loadOff("meshes/europemap.off");
+	mesh->loadOff("meshes/heptoroid.off");
+	//mesh->loadOff("meshes/mannequin.off");
+	//mesh->loadOff("meshes/sphere.off");
+	//mesh->loadOff("meshes/teapot.off");
+	//mesh->printmesh();
+	//delete mesh;
 	initOpenGLContext(argc, argv);
 
 	// set OpenGL states

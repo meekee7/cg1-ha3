@@ -79,9 +79,11 @@
   <ItemGroup>
     <ClCompile Include="cg1_ex3.cpp" />
     <ClCompile Include="GLSLShader.cpp" />
+    <ClCompile Include="Mesh.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLSLShader.h" />
+    <ClInclude Include="Mesh.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\BlinnPhong.frag" />
