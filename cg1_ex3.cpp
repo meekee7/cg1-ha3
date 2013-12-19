@@ -90,13 +90,14 @@ vec4 lightColor(0.7f, 0.7f, 0.7f, 1.0f);
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // variables, global
 GLSLShader blinnPhongShader;
-Mesh* mesh;
+meshcircle* currentmesh;
 
 
 enum MainRenderMode{
 	FLAT,
 	GOURAUD,
-	BLINN_PHONG,
+	BLINN_PHONG_FLAT,
+	BLINN_PHONG_GOURAUD,
 	MAX_MODES
 };
 
@@ -177,6 +178,12 @@ void setOpenGLStates(){
 //! Display mainloop. 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void display(){
+	if (currentmesh->mesh == nullptr){
+		currentmesh->mesh = new Mesh();
+		if (!currentmesh->mesh->loadOff(currentmesh->name))
+			cout << "Error: mesh " << currentmesh->name << " could not be loaded.\n";
+	}
+
 	// set OpenGL states
 	setOpenGLStates();
 
@@ -186,45 +193,38 @@ void display(){
 	// Set the render states for the current rendering technique
 	switch (currentRenderer){
 	case FLAT:
-		mesh->setRenderMode(Mesh::RenderMode::FLAT_RENDERER);
+		currentmesh->mesh->setRenderMode(Mesh::RenderMode::FLAT_RENDERER);
 		// TODO ENABLE PER FACE LIGHTING
 		break;
 	case GOURAUD:
-		mesh->setRenderMode(Mesh::RenderMode::GOURAUD_RENDERER);
+		currentmesh->mesh->setRenderMode(Mesh::RenderMode::GOURAUD_RENDERER);
 		// TODO ENABLE PER VERTEX LIGHTING
 		break;
-	case BLINN_PHONG:
+	case BLINN_PHONG_FLAT:
 		// ENABLE PER FRAGMENT LIGHTING
 		blinnPhongShader.bindShader();
-		mesh->setRenderMode(Mesh::RenderMode::GOURAUD_RENDERER);
+		currentmesh->mesh->setRenderMode(Mesh::RenderMode::FLAT_RENDERER);
 		break;
-		break;
+	case BLINN_PHONG_GOURAUD:
+		blinnPhongShader.bindShader();
+		currentmesh->mesh->setRenderMode(Mesh::RenderMode::GOURAUD_RENDERER);
 	default:
 		break;
 	}
+
 	glPushMatrix();
 	// Rotate the object
 	glMultMatrixf(&objectMatrix[0][0]);
-	//glScalef(0.75f, 0.75f, 0.75f);
+	//glScalef(1.5f, 0.5f, 0.85f);
 	// Render the object 
 	// TODO
-	mesh->render();
-	//glutSolidTeapot(1.0);
-
-	/*glBegin(GL_TRIANGLES);
-	glVertex3f(1, 0, 0);
-	glVertex3f(0, 1, 0);
-	glVertex3f(0, 0, 1);
-	glEnd();*/
-
-
+	currentmesh->mesh->render();
 
 	// disable program object to avoid side effects
 	glUseProgramObjectARB(0);
 	glPopMatrix();
 
 	glFlush();
-
 	glutPostRedisplay();
 	glutSwapBuffers();
 }
@@ -236,28 +236,49 @@ void display(){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void
 keyboard(unsigned char key, int /*x*/, int /*y*/) {
-
+	const char* rendererstrings[] = { "FLAT\n\n", "GOURAUD\n\n", "FLAT-PHONG\n\n", "GOURAUD-PHONG\n\n" };
 	switch (key) {
 	case TAB_KEY:
 		currentRenderer = (MainRenderMode)(((int)currentRenderer + 1) % MAX_MODES);
+		cout << rendererstrings[currentRenderer];
 		break;
-
 	case 's':
 		s = 2;
 		break;
-
 	case 27:
 	case 'q':
 	case 'Q':
-
 		exit(EXIT_SUCCESS);
 		break;
-
+	case 32: //Space
+		currentmesh = currentmesh->next;
+	case 'r': //Model switching leads to reload
+	case 'R': //Reset rotation and light
+		rotx = 0;
+		roty = 0;
+		for (int i = 0; i < 4; i++) //0 0 1 0
+			lightDirection[i] = i == 2;
+		objectMatrix = glm::rotate(rotx, vec3(1, 0, 0)) * glm::rotate(roty, vec3(0, 1, 0)) * glm::scale(vec3(s, 1, 1));
+		break;
+	case '1':
+		currentRenderer = FLAT;
+		cout << rendererstrings[0];
+		break;
+	case '2':
+		currentRenderer = GOURAUD;
+		cout << rendererstrings[1];
+		break;
+	case '3':
+		currentRenderer = BLINN_PHONG_FLAT;
+		cout << rendererstrings[2];
+		break;
+	case '4':
+		currentRenderer = BLINN_PHONG_GOURAUD;
+		cout << rendererstrings[3];
+		break;
 	default:
-
 		break;
 	}
-
 	glutPostRedisplay();
 }
 
@@ -268,29 +289,26 @@ keyboard(unsigned char key, int /*x*/, int /*y*/) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 int
 main(int argc, char** argv) {
-	mesh = new Mesh();
-	//mesh->loadOff("meshes/bunny.off");
-	//mesh->loadOff("meshes/bunnysimple.off");
-	//mesh->loadOff("meshes/camel_head.off");
-	//mesh->loadOff("meshes/cow.off");
-	//mesh->loadOff("meshes/dragon.off");
-	//mesh->loadOff("meshes/drei.off");
-	mesh->loadOff("meshes/eight.off");
-	//mesh->loadOff("meshes/europemap.off");
-	//mesh->loadOff("meshes/heptoroid.off");
-	//mesh->loadOff("meshes/mannequin.off");
-	//mesh->loadOff("meshes/sphere.off");
-	//mesh->loadOff("meshes/teapot.off");
-	//mesh->printmesh();
-	//delete mesh;
 	initOpenGLContext(argc, argv);
-
+	
 	// set OpenGL states
 	setOpenGLStates();
 
 	// load ressources
 	blinnPhongShader.load("shaders/BlinnPhong");
 	// TODO LOAD MESH
+	meshcircle* meshes = new meshcircle();
+	currentmesh = meshes;
+	int numofmodels = 12;
+	const char* names[] = { "meshes/eight.off", "meshes/europemap.off", "meshes/drei.off", "meshes/heptoroid.off",
+		"meshes/bunnysimple.off", "meshes/camel_head.off", "meshes/cow.off", "meshes/dragon.off",
+		"meshes/mannequin.off", "meshes/sphere.off", "meshes/teapot.off", "meshes/bunny.off" };
+	for (int i = 0; i < numofmodels; i++){
+		meshes->name = names[i];
+		meshes->mesh = nullptr;
+		meshes->next = i == numofmodels - 1 ? currentmesh : new meshcircle();
+		meshes = meshes->next;
+	}
 
 	// register glut callbacks
 	glutDisplayFunc(display);
@@ -317,6 +335,8 @@ void initOpenGLContext(int argc, char **argv){
 	cout << " keyboard:                                  \n";
 	cout << " q/Q: quit program                          \n";
 	cout << " tab: switch to next renderer               \n";
+	cout << " space: load next model                     \n";
+	cout << " r/R: reset rotaion and light direction     \n";
 	cout << "                                            \n";
 	cout << " mouse:                                     \n";
 	cout << " left click+drag: rotate the object         \n";
@@ -391,7 +411,7 @@ void mouseMoved(int x, int y)
 		rotx += 0.05*(y - oldY);
 		roty += 0.05*(x - oldX);
 
-		objectMatrix = glm::rotate(rotx, vec3(1, 0, 0)) * glm::rotate(roty, vec3(0, 1, 0)) * glm::scale(vec3(s, 1, 1));;
+		objectMatrix = glm::rotate(rotx, vec3(1, 0, 0)) * glm::rotate(roty, vec3(0, 1, 0)) * glm::scale(vec3(s, 1, 1));
 
 	}
 	else if (midButtondown){

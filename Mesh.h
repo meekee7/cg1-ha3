@@ -10,11 +10,10 @@ public:
 	enum RenderMode{
 		FLAT_RENDERER,
 		GOURAUD_RENDERER,
-		BLINN_PHONG_RENDERER,
-		MAX_MODES_RENDERER
 	};
 	void setRenderMode(RenderMode mode);
 	void render();
+	
 private:
 	typedef struct {
 		int size;
@@ -37,3 +36,8 @@ private:
 	void crossproduct(GLfloat* a, GLfloat* b, GLfloat* result);
 };
 
+typedef struct meshcircle {
+	Mesh* mesh;
+	const char* name;
+	meshcircle* next;
+} meshcircle;
